@@ -26,19 +26,19 @@ datasets:
     augmentation:
         image_shape: (192, 640)
     train:
-        batch_size: 6
+        batch_size: 20
         dataset: ['KITTI']
-        path: ['/data/datasets/KITTI_tiny']
+        path: ['/workspaces/packnet-sfm/datasets/KITTI_tiny']
         split: ['kitti_tiny.txt']
         depth_type: ['velodyne']
-        repeat: [1000]
+        repeat: [100]
     validation:
         dataset: ['KITTI']
-        path: ['/data/datasets/KITTI_tiny']
+        path: ['/workspaces/packnet-sfm/datasets/KITTI_tiny']
         split: ['kitti_tiny.txt']
         depth_type: ['velodyne']
     test:
         dataset: ['KITTI']
-        path: ['/data/datasets/KITTI_tiny']
+        path: ['/workspaces/packnet-sfm/datasets/KITTI_tiny']
         split: ['kitti_tiny.txt']
         depth_type: ['velodyne']

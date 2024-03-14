@@ -2,34 +2,32 @@
 
 import os
 import torch
-import horovod.torch as hvd
+# import horovod.torch as hvd
 from packnet_sfm.trainers.base_trainer import BaseTrainer, sample_to_cuda
 from packnet_sfm.utils.config import prep_logger_and_checkpoint
 from packnet_sfm.utils.logging import print_config
 from packnet_sfm.utils.logging import AvgMeter
 
+# from __future__  import annotations
+from packnet_sfm.models.model_wrapper import ModelWrapper
+from torch.utils.data import DataLoader
+from torch.optim import Optimizer
 
-class HorovodTrainer(BaseTrainer):
+
+class CustomTrainer(BaseTrainer):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        hvd.init()
+        # hvd.init()
         torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", 1)))
-        torch.cuda.set_device(hvd.local_rank())
+        # torch.cuda.set_device(hvd.local_rank())
+        torch.cuda.set_device(0)
         torch.backends.cudnn.benchmark = True
 
         self.avg_loss = AvgMeter(50)
         self.dtype = kwargs.get("dtype", None)  # just for test for now
 
-    @property
-    def proc_rank(self):
-        return hvd.rank()
-
-    @property
-    def world_size(self):
-        return hvd.size()
-
-    def fit(self, module):
+    def fit(self, module: ModelWrapper):
 
         # Prepare module for training
         module.trainer = self
@@ -43,9 +41,7 @@ class HorovodTrainer(BaseTrainer):
         module.configure_optimizers()
 
         # Create distributed optimizer
-        compression = hvd.Compression.none
-        optimizer = hvd.DistributedOptimizer(module.optimizer,
-            named_parameters=module.named_parameters(), compression=compression)
+        optimizer = module.optimizer    
         scheduler = module.scheduler
 
         # Get train and val dataloaders
@@ -70,7 +66,7 @@ class HorovodTrainer(BaseTrainer):
             # Take a scheduler step
             scheduler.step()
 
-    def train(self, dataloader, module, optimizer):
+    def train(self, dataloader:DataLoader, module: ModelWrapper, optimizer: Optimizer):
         # Set module to train
         module.train()
         # Shuffle dataloader sampler
@@ -95,10 +91,9 @@ class HorovodTrainer(BaseTrainer):
             output['loss'] = output['loss'].detach()
             outputs.append(output)
             # Update progress bar if in rank 0
-            if self.is_rank_0:
-                progress_bar.set_description(
-                    'Epoch {} | Avg.Loss {:.4f}'.format(
-                        module.current_epoch, self.avg_loss(output['loss'].item())))
+            progress_bar.set_description(
+                'Epoch {} | Avg.Loss {:.4f}'.format(
+                    module.current_epoch, self.avg_loss(output['loss'].item())))
         # Return outputs for epoch end
         return module.training_epoch_end(outputs)
 

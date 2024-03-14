@@ -1,14 +1,7 @@
-
-try:
-    import horovod.torch as hvd
-    HAS_HOROVOD = True
-except ImportError:
-    HAS_HOROVOD = False
+HAS_HOROVOD = False
 
 
 def hvd_init():
-    if HAS_HOROVOD:
-        hvd.init()
     return HAS_HOROVOD
 
 def on_rank_0(func):
@@ -18,10 +11,10 @@ def on_rank_0(func):
     return wrapper
 
 def rank():
-    return hvd.rank() if HAS_HOROVOD else 0
+    return 0
 
 def world_size():
-    return hvd.size() if HAS_HOROVOD else 1
+    return 1
 
 @on_rank_0
 def print0(string='\n'):
@@ -45,4 +38,6 @@ def reduce_value(value, average, name):
     value : torch.Tensor
         reduced value
     """
-    return hvd.allreduce(value, average=average, name=name)
+    # print("average: ", average, "name: ", name)
+    # return hvd.allreduce(value, average=average, name=name)
+    return value

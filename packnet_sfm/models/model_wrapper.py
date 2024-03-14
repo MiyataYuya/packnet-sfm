@@ -45,11 +45,14 @@ class ModelWrapper(torch.nn.Module):
 
         # Task metrics
         self.metrics_name = 'depth'
-        self.metrics_keys = ('abs_rel', 'sqr_rel', 'rmse', 'rmse_log', 'a1', 'a2', 'a3')
+        self.metrics_keys = ('abs_rel', 'sqr_rel', 'rmse',
+                             'rmse_log', 'a1', 'a2', 'a3')
         self.metrics_modes = ('', '_pp', '_gt', '_pp_gt')
 
         # Model, optimizers, schedulers and datasets are None for now
-        self.model = self.optimizer = self.scheduler = None
+        self.model = None
+        self.optimizer: torch.optim.Optimizer = None
+        self.scheduler = None
         self.train_dataset = self.validation_dataset = self.test_dataset = None
         self.current_epoch = 0
 
@@ -113,7 +116,8 @@ class ModelWrapper(torch.nn.Module):
         """Returns various logs for tracking."""
         params = OrderedDict()
         for param in self.optimizer.param_groups:
-            params['{}_learning_rate'.format(param['name'].lower())] = param['lr']
+            params['{}_learning_rate'.format(
+                param['name'].lower())] = param['lr']
         params['progress'] = self.progress
         return {
             **params,
@@ -149,8 +153,10 @@ class ModelWrapper(torch.nn.Module):
         optimizer = optimizer(params)
 
         # Load and initialize scheduler
-        scheduler = getattr(torch.optim.lr_scheduler, self.config.model.scheduler.name)
-        scheduler = scheduler(optimizer, **filter_args(scheduler, self.config.model.scheduler))
+        scheduler = getattr(torch.optim.lr_scheduler,
+                            self.config.model.scheduler.name)
+        scheduler = scheduler(
+            optimizer, **filter_args(scheduler, self.config.model.scheduler))
 
         if self.resume:
             if 'optimizer' in self.resume:
@@ -292,14 +298,14 @@ class ModelWrapper(torch.nn.Module):
         """Evaluate batch to produce depth metrics."""
         # Get predicted depth
         inv_depths = self.model(batch)['inv_depths']
-        depth = inv2depth(inv_depths[0])
+        depth = inv2depth(inv_depths)
         # Post-process predicted depth
         batch['rgb'] = flip_lr(batch['rgb'])
         if 'input_depth' in batch:
             batch['input_depth'] = flip_lr(batch['input_depth'])
         inv_depths_flipped = self.model(batch)['inv_depths']
         inv_depth_pp = post_process_inv_depth(
-            inv_depths[0], inv_depths_flipped[0], method='mean')
+            inv_depths, inv_depths_flipped, method='mean')
         depth_pp = inv2depth(inv_depth_pp)
         batch['rgb'] = flip_lr(batch['rgb'])
         # Calculate predicted metrics
@@ -352,9 +358,10 @@ class ModelWrapper(torch.nn.Module):
             print(hor_line)
             path_line = '{}'.format(
                 os.path.join(dataset.path[n], dataset.split[n]))
-            if len(dataset.cameras[n]) == 1: # only allows single cameras
+            if len(dataset.cameras[n]) == 1:  # only allows single cameras
                 path_line += ' ({})'.format(dataset.cameras[n][0])
-            print(wrap(pcolor('*** {:<87}'.format(path_line), 'magenta', attrs=['bold'])))
+            print(
+                wrap(pcolor('*** {:<87}'.format(path_line), 'magenta', attrs=['bold'])))
             print(hor_line)
             for key, metric in metrics.items():
                 if self.metrics_name in key:
@@ -399,10 +406,10 @@ def setup_depth_net(config, prepared, **kwargs):
     """
     print0(pcolor('DepthNet: %s' % config.name, 'yellow'))
     depth_net = load_class_args_create(config.name,
-        paths=['packnet_sfm.networks.depth',],
-        args={**config, **kwargs},
-    )
-    if not prepared and config.checkpoint_path is not '':
+                                       paths=['packnet_sfm.networks.depth',],
+                                       args={**config, **kwargs},
+                                       )
+    if not prepared and config.checkpoint_path != '':
         depth_net = load_network(depth_net, config.checkpoint_path,
                                  ['depth_net', 'disp_network'])
     return depth_net
@@ -428,10 +435,10 @@ def setup_pose_net(config, prepared, **kwargs):
     """
     print0(pcolor('PoseNet: %s' % config.name, 'yellow'))
     pose_net = load_class_args_create(config.name,
-        paths=['packnet_sfm.networks.pose',],
-        args={**config, **kwargs},
-    )
-    if not prepared and config.checkpoint_path is not '':
+                                      paths=['packnet_sfm.networks.pose',],
+                                      args={**config, **kwargs},
+                                      )
+    if not prepared and config.checkpoint_path != '':
         pose_net = load_network(pose_net, config.checkpoint_path,
                                 ['pose_net', 'pose_network'])
     return pose_net
@@ -465,7 +472,7 @@ def setup_model(config, prepared, **kwargs):
     if 'pose_net' in model.network_requirements:
         model.add_pose_net(setup_pose_net(config.pose_net, prepared))
     # If a checkpoint is provided, load pretrained model
-    if not prepared and config.checkpoint_path is not '':
+    if not prepared and config.checkpoint_path != '':
         model = load_network(model, config.checkpoint_path, 'model')
     # Return model
     return model
@@ -569,7 +576,7 @@ def worker_init_fn(worker_id):
 def get_datasampler(dataset, mode):
     """Distributed data sampler"""
     return torch.utils.data.distributed.DistributedSampler(
-        dataset, shuffle=(mode=='train'),
+        dataset, shuffle=(mode == 'train'),
         num_replicas=world_size(), rank=rank())
 
 

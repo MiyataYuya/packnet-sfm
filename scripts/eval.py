@@ -4,10 +4,10 @@ import argparse
 import torch
 
 from packnet_sfm.models.model_wrapper import ModelWrapper
-from packnet_sfm.trainers.horovod_trainer import HorovodTrainer
+from packnet_sfm.trainers.horovod_trainer import CustomTrainer
 from packnet_sfm.utils.config import parse_test_file
 from packnet_sfm.utils.load import set_debug
-from packnet_sfm.utils.horovod import hvd_init
+# from packnet_sfm.utils.horovod import hvd_init
 
 
 def parse_args():
@@ -38,7 +38,7 @@ def test(ckpt_file, cfg_file, half):
         use half precision (fp16)
     """
     # Initialize horovod
-    hvd_init()
+    # hvd_init()
 
     # Parse arguments
     config, state_dict = parse_test_file(ckpt_file, cfg_file)
@@ -55,7 +55,7 @@ def test(ckpt_file, cfg_file, half):
     config.arch["dtype"] = torch.float16 if half else None
 
     # Create trainer with args.arch parameters
-    trainer = HorovodTrainer(**config.arch)
+    trainer = CustomTrainer(**config.arch)
 
     # Test model
     trainer.test(model_wrapper)

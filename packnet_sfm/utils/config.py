@@ -60,7 +60,7 @@ def set_name(config):
         Updated run name
     """
     # If there is a name already, do nothing
-    if config.name is not '':
+    if config.name != '':
         return config.name
     else:
         # Create a name based on available information
@@ -119,7 +119,7 @@ def prep_logger_and_checkpoint(model):
         model.config.name = model.config.wandb.name = model.logger.run_name
         model.config.wandb.url = model.logger.run_url
         # If we are saving models we need to update the path
-        if model.config.checkpoint.filepath is not '':
+        if model.config.checkpoint.filepath != '':
             # Change checkpoint filepath
             filepath = model.config.checkpoint.filepath.split('/')
             filepath[-2] = model.config.name
@@ -266,11 +266,11 @@ def prepare_train_config(config):
         return config
 
     # Asserts
-    assert config.wandb.dry_run or config.wandb.entity is not '', \
+    assert config.wandb.dry_run or config.wandb.entity != '', \
         'You need a wandb entity'
-    assert config.wandb.dry_run or config.wandb.project is not '', \
+    assert config.wandb.dry_run or config.wandb.project != '', \
         'You need a wandb project'
-    assert config.checkpoint.filepath is '' or \
+    assert config.checkpoint.filepath == '' or \
            (config.checkpoint.monitor_index < len(config.datasets.validation.split)), \
         'You need to monitor a valid dataset'
 

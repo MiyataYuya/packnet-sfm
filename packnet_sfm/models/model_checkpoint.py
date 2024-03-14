@@ -55,7 +55,7 @@ class ModelCheckpoint:
 
         self.s3_path = s3_path
         self.s3_frequency = s3_frequency
-        self.s3_enabled = s3_path is not '' and s3_frequency > 0
+        self.s3_enabled = s3_path != '' and s3_frequency > 0
         self.save_code = True
 
     @staticmethod

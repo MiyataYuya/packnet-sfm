@@ -22,24 +22,12 @@ class BaseTrainer:
     def __init__(self, min_epochs=0, max_epochs=50,
                  validate_first=False, checkpoint=None, **kwargs):
 
-        self.min_epochs = min_epochs
-        self.max_epochs = max_epochs
+        self.min_epochs     = min_epochs
+        self.max_epochs     = max_epochs
         self.validate_first = validate_first
 
         self.checkpoint = checkpoint
         self.module = None
-
-    @property
-    def proc_rank(self):
-        raise NotImplementedError('Not implemented for BaseTrainer')
-
-    @property
-    def world_size(self):
-        raise NotImplementedError('Not implemented for BaseTrainer')
-
-    @property
-    def is_rank_0(self):
-        return self.proc_rank == 0
 
     def check_and_save(self, module, output):
         if self.checkpoint:
@@ -47,23 +35,24 @@ class BaseTrainer:
 
     def train_progress_bar(self, dataloader, config, ncols=120):
         return tqdm(enumerate(dataloader, 0),
-                    unit=' images', unit_scale=self.world_size * config.batch_size,
+                    unit=' images', unit_scale=config.batch_size,
                     total=len(dataloader), smoothing=0,
-                    disable=not self.is_rank_0, ncols=ncols,
+                    ncols=ncols,
                     )
 
     def val_progress_bar(self, dataloader, config, n=0, ncols=120):
         return tqdm(enumerate(dataloader, 0),
-                    unit=' images', unit_scale=self.world_size * config.batch_size,
+                    unit=' images', unit_scale=config.batch_size,
                     total=len(dataloader), smoothing=0,
-                    disable=not self.is_rank_0, ncols=ncols,
+                    ncols=ncols,
                     desc=prepare_dataset_prefix(config, n)
                     )
 
     def test_progress_bar(self, dataloader, config, n=0, ncols=120):
         return tqdm(enumerate(dataloader, 0),
-                    unit=' images', unit_scale=self.world_size * config.batch_size,
+                    unit=' images', unit_scale=config.batch_size,
                     total=len(dataloader), smoothing=0,
-                    disable=not self.is_rank_0, ncols=ncols,
+                    # disable=not self.is_rank_0,
+                    ncols=ncols,
                     desc=prepare_dataset_prefix(config, n)
                     )
