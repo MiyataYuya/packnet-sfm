@@ -8,35 +8,58 @@ import numpy as np
 from packnet_sfm.utils.image import load_image
 
 ########################################################################################################################
-#### FUNCTIONS
+# FUNCTIONS
 ########################################################################################################################
 
+
 def dummy_calibration(image):
+    # w, h = [float(d) for d in image.size]
+    # return np.array([[1000. , 0.    , w / 2. - 0.5],
+    #                  [0.    , 1000. , h / 2. - 0.5],
+    #                  [0.    , 0.    , 1.          ]])
+    return px_cam_calibration(image)
+
+
+def px_cam_calibration(image):
     w, h = [float(d) for d in image.size]
-    return np.array([[1000. , 0.    , w / 2. - 0.5],
-                     [0.    , 1000. , h / 2. - 0.5],
-                     [0.    , 0.    , 1.          ]])
+    fx = fy = 328.86
+    cx = cy = 300.0
+    return np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
+
 
 def get_idx(filename):
     return int(re.search(r'\d+', filename).group())
 
+# def read_files(directory, ext=('.png', '.jpg', '.jpeg'), skip_empty=True):
+#     files = defaultdict(list)
+#     for entry in os.scandir(directory):
+#         relpath = os.path.relpath(entry.path, directory)
+#         if entry.is_dir():
+#             d_files = read_files(entry.path, ext=ext, skip_empty=skip_empty)
+#             if skip_empty and not len(d_files):
+#                 continue
+#             files[relpath] = d_files[entry.path]
+#         elif entry.is_file():
+#             if ext is None or entry.path.lower().endswith(tuple(ext)):
+#                 files[directory].append(relpath)
+#     return files
+
+
 def read_files(directory, ext=('.png', '.jpg', '.jpeg'), skip_empty=True):
     files = defaultdict(list)
     for entry in os.scandir(directory):
-        relpath = os.path.relpath(entry.path, directory)
-        if entry.is_dir():
+        if entry.is_file() and (ext is None or entry.name.lower().endswith(tuple(ext))):
+            files[os.path.basename(directory)].append(entry.name)
+        elif entry.is_dir():
             d_files = read_files(entry.path, ext=ext, skip_empty=skip_empty)
-            if skip_empty and not len(d_files):
-                continue
-            files[relpath] = d_files[entry.path]
-        elif entry.is_file():
-            if ext is None or entry.path.lower().endswith(tuple(ext)):
-                files[directory].append(relpath)
+            if not skip_empty or d_files:
+                files.update(d_files)
     return files
 
 ########################################################################################################################
-#### DATASET
+# DATASET
 ########################################################################################################################
+
 
 class ImageDataset(Dataset):
     def __init__(self, root_dir, split, data_transform=None,
@@ -61,7 +84,8 @@ class ImageDataset(Dataset):
         file_tree = read_files(root_dir)
         for k, v in file_tree.items():
             file_set = set(file_tree[k])
-            files = [fname for fname in sorted(v) if self._has_context(fname, file_set)]
+            files = [fname for fname in sorted(
+                v) if self._has_context(fname, file_set)]
             self.files.extend([[k, fname] for fname in files])
 
         self.data_transform = data_transform
@@ -71,6 +95,7 @@ class ImageDataset(Dataset):
 
     def _change_idx(self, idx, filename):
         _, ext = os.path.splitext(os.path.basename(filename))
+        var = self.split.format(idx) + ext
         return self.split.format(idx) + ext
 
     def _has_context(self, filename, file_set):
@@ -80,7 +105,8 @@ class ImageDataset(Dataset):
     def _get_context_file_paths(self, filename):
         fidx = get_idx(filename)
         idxs = list(np.arange(-self.backward_context * self.strides, 0, self.strides)) + \
-               list(np.arange(0, self.forward_context * self.strides, self.strides) + self.strides)
+            list(np.arange(0, self.forward_context *
+                 self.strides, self.strides) + self.strides)
         return [self._change_idx(fidx + i, filename) for i in idxs]
 
     def _read_rgb_context_files(self, session, filename):

@@ -1,0 +1,44 @@
+arch:
+    max_epochs: 3
+model:
+    name: 'SelfSupModel'
+    optimizer:
+        name: 'Adam'
+        depth:
+            lr: 0.0002
+        pose:
+            lr: 0.0002
+    scheduler:
+        name: 'StepLR'
+        step_size: 30
+        gamma: 0.5
+    depth_net:
+        name: 'PackNet01'
+        version: '1A'
+    pose_net:
+        name: 'PoseNet'
+        version: ''
+    params:
+        crop: 'garg'
+        min_depth: 0.0
+        max_depth: 80.0
+datasets:
+    augmentation:
+        image_shape: (600, 600)
+    train:
+        batch_size: 10
+        dataset: ['Image']
+        path: ['/workspaces/packnet-sfm/datasets/KITTI_raw/2011_09_30/']
+        split: ['2011_09_30_drive_0016_sync',"2011_09_30_drive_0018_sync", "2011_09_30_drive_0020_sync", "2011_09_30_drive_0027_sync", "2011_09_30_drive_0028_sync", "2011_09_30_drive_0033_sync",]
+        # depth_type: ['velodyne']
+        # repeat: [100]
+    validation:
+        dataset: ['Image']
+        path: ['/workspaces/packnet-sfm/datasets/KITTI_raw/2011_09_30/']
+        split: [ "2011_09_30_drive_0034_sync", ]
+        # depth_type: ['velodyne']
+    test:
+        dataset: ['Image']
+        path: ['/workspaces/packnet-sfm/datasets/KITTI_raw/2011_09_30/']
+        split: [ "2011_09_30_drive_0072_sync", ]
+        # depth_type: ['velodyne']

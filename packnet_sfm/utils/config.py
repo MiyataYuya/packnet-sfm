@@ -85,7 +85,7 @@ def set_checkpoint(config):
         Updated model configuration
     """
     # If checkpoint is enabled
-    if config.checkpoint.filepath is not '':
+    if config.checkpoint.filepath != '':
         # Create proper monitor string
         config.checkpoint.monitor = os.path.join('{}-{}'.format(
             prepare_dataset_prefix(config.datasets.validation,
@@ -96,7 +96,7 @@ def set_checkpoint(config):
             config.checkpoint.filepath, config.name,
             '{epoch:02d}_{%s:.3f}' % config.checkpoint.monitor)
         # Set s3 url
-        if config.checkpoint.s3_path is not '':
+        if config.checkpoint.s3_path != '':
             config.checkpoint.s3_url = s3_url(config)
     else:
         # If not saving checkpoint, do not sync to s3

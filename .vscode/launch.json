@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             // "args": "${command:pickArgs}"
             "args": [
-                "configs/overfit_kitti.yaml"
+                "configs/overfit_image.yaml"
             ],
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
