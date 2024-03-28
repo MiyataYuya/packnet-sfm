@@ -1,5 +1,9 @@
+arch:
+    max_epochs: 1000
+    # validate_first: True
 model:
     name: 'SelfSupModel'
+    checkpoint_path: '/workspaces/packnet-sfm/runs/train/default_config-train_PxCam-2024.03.26-09h30m39s/epoch=49_-loss=0.000.ckpt'
     optimizer:
         name: 'Adam'
         depth:
@@ -22,29 +26,45 @@ model:
         max_depth: 80.0
 datasets:
     augmentation:
-        image_shape: (400, 400)
+        image_shape: (384, 384)
     train:
-        batch_size: 8
+        batch_size: 6
         dataset: ['Image']
-        path: ['./datasets/KITTI_raw']
-        split: ['data_splits/eigen_zhou_files.txt']
+        path: [
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_01_15_Pro.mp4/',
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_01_59_Pro.mp4/',
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_03_18_Pro.mp4/',
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_04_19_Pro.mp4/',
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_04_37_Pro.mp4/',
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240326_14_32_37_Pro.mp4/',
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240326_14_34_13_Pro.mp4/',
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240326_14_35_09_Pro.mp4/',
+            ]
+        split: ['{:08d}','{:08d}','{:08d}','{:08d}','{:08d}','{:08d}','{:08d}','{:08d}',]
         # depth_type: ['velodyne']
         # repeat: [2]
     validation:
         dataset: ['Image']
-        path: ['./datasets/KITTI_raw']
-        split: ['data_splits/eigen_val_files.txt',
-                'data_splits/eigen_test_files.txt']
+        path: [
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_02_49_Pro.mp4/',
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_05_26_Pro.mp4/',
+            ]
+        split: ['{:08d}', '{:08d}',]
         # depth_type: ['velodyne']
     test:
         dataset: ['Image']
-        path: ['./datasets/KITTI_raw']
-        split: ['data_splits/eigen_test_files.txt']
+        path: [
+            '/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_02_49_Pro.mp4/',
+            ]
+        split: ['{:08d}',]
         # depth_type: ['velodyne']
 save:
-    folder: '/runs/save'
+    folder: '/workspaces/packnet-sfm/runs/train/'
     depth:
         rgb: True
-        viz: True
-        npz: True
+        # viz: True
+        # npz: True
         png: True
+checkpoint:
+    filepath: '/workspaces/packnet-sfm/runs/train/'
+    save_top_k: -1

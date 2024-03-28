@@ -22,8 +22,8 @@ def dummy_calibration(image):
 
 def px_cam_calibration(image):
     w, h = [float(d) for d in image.size]
-    fx = fy = 328.86
-    cx = cy = 300.0
+    fx = fy = 288.57
+    cx = cy = 200.0
     return np.array([[fx, 0, cx], [0, fy, cy], [0, 0, 1]])
 
 

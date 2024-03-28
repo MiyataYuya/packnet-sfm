@@ -297,7 +297,8 @@ class ModelWrapper(torch.nn.Module):
     def evaluate_depth(self, batch):
         """Evaluate batch to produce depth metrics."""
         # Get predicted depth
-        inv_depths = self.model(batch)['inv_depths']
+        _inv_depths = self.model(batch)
+        inv_depths = _inv_depths['inv_depths']
         depth = inv2depth(inv_depths)
         # Post-process predicted depth
         batch['rgb'] = flip_lr(batch['rgb'])

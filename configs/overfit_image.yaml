@@ -1,5 +1,6 @@
 arch:
     max_epochs: 3
+    validate_first: True
 model:
     name: 'SelfSupModel'
     optimizer:
@@ -24,21 +25,32 @@ model:
         max_depth: 80.0
 datasets:
     augmentation:
-        image_shape: (600, 600)
+        image_shape: (384, 384)
     train:
-        batch_size: 10
+        batch_size: 4
         dataset: ['Image']
-        path: ['/workspaces/packnet-sfm/datasets/KITTI_raw/2011_09_30/']
-        split: ['2011_09_30_drive_0016_sync',"2011_09_30_drive_0018_sync", "2011_09_30_drive_0020_sync", "2011_09_30_drive_0027_sync", "2011_09_30_drive_0028_sync", "2011_09_30_drive_0033_sync",]
+        path: ["/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240325_18_01_15_Pro.mp4/"]
+        split: ["{:08d}"]
         # depth_type: ['velodyne']
         # repeat: [100]
     validation:
         dataset: ['Image']
-        path: ['/workspaces/packnet-sfm/datasets/KITTI_raw/2011_09_30/']
-        split: [ "2011_09_30_drive_0034_sync", ]
+        path: ['/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240326_14_35_09_Pro.mp4/']
+        split: ["{:08d}"]
         # depth_type: ['velodyne']
     test:
         dataset: ['Image']
-        path: ['/workspaces/packnet-sfm/datasets/KITTI_raw/2011_09_30/']
-        split: [ "2011_09_30_drive_0072_sync", ]
+        path: ['/workspaces/packnet-sfm/datasets/model_of_mouth/WIN_20240326_14_35_09_Pro.mp4/']
+        split: ["{:08d}"]
         # depth_type: ['velodyne']
+save:
+    folder: '/workspaces/packnet-sfm/runs/train/'
+    # pretrained: '/workspaces/packnet-sfm/runs/train/default_config-train_PxCam-2024.03.26-09h30m39s/epoch=49_-loss=0.000.ckpt'
+    depth:
+        rgb: True
+        # viz: True
+        # npz: True
+        png: True
+checkpoint:
+    filepath: '/workspaces/packnet-sfm/runs/train/'
+    save_top_k: -1

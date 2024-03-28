@@ -12,6 +12,7 @@ from packnet_sfm.utils.logging import AvgMeter
 from packnet_sfm.models.model_wrapper import ModelWrapper
 from torch.utils.data import DataLoader
 from torch.optim import Optimizer
+from torch.utils.tensorboard import SummaryWriter
 
 
 class CustomTrainer(BaseTrainer):
@@ -41,7 +42,7 @@ class CustomTrainer(BaseTrainer):
         module.configure_optimizers()
 
         # Create distributed optimizer
-        optimizer = module.optimizer    
+        optimizer = module.optimizer
         scheduler = module.scheduler
 
         # Get train and val dataloaders
@@ -53,6 +54,9 @@ class CustomTrainer(BaseTrainer):
             validation_output = self.validate(val_dataloaders, module)
             self.check_and_save(module, validation_output)
 
+        # Create tensorboard writer
+        self.writer = SummaryWriter(os.path.join(
+            module.config.save.folder, module.config.name))
         # Epoch loop
         for epoch in range(module.current_epoch, self.max_epochs):
             # Train
@@ -66,7 +70,7 @@ class CustomTrainer(BaseTrainer):
             # Take a scheduler step
             scheduler.step()
 
-    def train(self, dataloader:DataLoader, module: ModelWrapper, optimizer: Optimizer):
+    def train(self, dataloader: DataLoader, module: ModelWrapper, optimizer: Optimizer):
         # Set module to train
         module.train()
         # Shuffle dataloader sampler
@@ -91,6 +95,8 @@ class CustomTrainer(BaseTrainer):
             output['loss'] = output['loss'].detach()
             outputs.append(output)
             # Update progress bar if in rank 0
+            self.writer.add_scalar(
+                "Loss/train", output['loss'].item(), i + module.current_epoch * len(dataloader))
             progress_bar.set_description(
                 'Epoch {} | Avg.Loss {:.4f}'.format(
                     module.current_epoch, self.avg_loss(output['loss'].item())))

@@ -55,9 +55,19 @@ def write_depth(filename, depth, intrinsics=None):
     if filename.endswith('.npz'):
         np.savez_compressed(filename, depth=depth, intrinsics=intrinsics)
     # If we are saving as a .png
+    # elif filename.endswith('.png'):
+    #     _tmp = (depth / depth.max() * 255).int()
+    #     dst = transforms.ToPILImage()(_tmp)
+    #     dst.save(filename)
     elif filename.endswith('.png'):
-        depth = transforms.ToPILImage()((depth * 256).int())
-        depth.save(filename)
+        # テンソルを0から255の範囲に正規化し、uint8型に変換
+        normalized_tensor = (depth / depth.max() * 255).float().to(torch.uint8)
+
+        # テンソルからPIL画像への変換
+        image = transforms.ToPILImage()(normalized_tensor)
+
+        # 画像をファイルに保存
+        image.save(filename)
     # Something is wrong
     else:
         raise NotImplementedError('Depth filename not valid.')
@@ -157,7 +167,8 @@ def inv_depths_normalize(inv_depths):
     norm_inv_depths : list of torch.Tensor [B,1,H,W]
         Normalized inverse depth maps
     """
-    mean_inv_depths = [inv_depth.mean(2, True).mean(3, True) for inv_depth in inv_depths]
+    mean_inv_depths = [inv_depth.mean(2, True).mean(
+        3, True) for inv_depth in inv_depths]
     return [inv_depth / mean_inv_depth.clamp(min=1e-6)
             for inv_depth, mean_inv_depth in zip(inv_depths, mean_inv_depths)]
 
@@ -189,12 +200,16 @@ def calc_smoothness(inv_depths, images, num_scales):
     image_gradients_x = [gradient_x(image) for image in images]
     image_gradients_y = [gradient_y(image) for image in images]
 
-    weights_x = [torch.exp(-torch.mean(torch.abs(g), 1, keepdim=True)) for g in image_gradients_x]
-    weights_y = [torch.exp(-torch.mean(torch.abs(g), 1, keepdim=True)) for g in image_gradients_y]
+    weights_x = [torch.exp(-torch.mean(torch.abs(g), 1, keepdim=True))
+                 for g in image_gradients_x]
+    weights_y = [torch.exp(-torch.mean(torch.abs(g), 1, keepdim=True))
+                 for g in image_gradients_y]
 
     # Note: Fix gradient addition
-    smoothness_x = [inv_depth_gradients_x[i] * weights_x[i] for i in range(num_scales)]
-    smoothness_y = [inv_depth_gradients_y[i] * weights_y[i] for i in range(num_scales)]
+    smoothness_x = [inv_depth_gradients_x[i] * weights_x[i]
+                    for i in range(num_scales)]
+    smoothness_y = [inv_depth_gradients_y[i] * weights_y[i]
+                    for i in range(num_scales)]
     return smoothness_x, smoothness_y
 
 
@@ -252,7 +267,7 @@ def post_process_inv_depth(inv_depth, inv_depth_flipped, method='mean'):
     mask = 1.0 - torch.clamp(20. * (xs - 0.05), 0., 1.)
     mask_hat = flip_lr(mask)
     return mask_hat * inv_depth + mask * inv_depth_hat + \
-           (1.0 - mask - mask_hat) * inv_depth_fused
+        (1.0 - mask - mask_hat) * inv_depth_fused
 
 
 def compute_depth_metrics(config, gt, pred, use_gt_scale=True):
@@ -308,7 +323,7 @@ def compute_depth_metrics(config, gt, pred, use_gt_scale=True):
         # Calculate depth metrics
 
         thresh = torch.max((gt_i / pred_i), (pred_i / gt_i))
-        a1 += (thresh < 1.25     ).float().mean()
+        a1 += (thresh < 1.25).float().mean()
         a2 += (thresh < 1.25 ** 2).float().mean()
         a3 += (thresh < 1.25 ** 3).float().mean()
 
@@ -321,7 +336,7 @@ def compute_depth_metrics(config, gt, pred, use_gt_scale=True):
                                            torch.log(pred_i)) ** 2))
     # Return average values for each metric
     return torch.tensor([metric / batch_size for metric in
-        [abs_rel, sq_rel, rmse, rmse_log, a1, a2, a3]]).type_as(gt)
+                         [abs_rel, sq_rel, rmse, rmse_log, a1, a2, a3]]).type_as(gt)
 
 
 def scale_depth(pred, gt, scale_fn):
@@ -349,12 +364,16 @@ def scale_depth(pred, gt, scale_fn):
         return interpolate_image(pred, gt.shape, mode='bilinear', align_corners=True)
     else:
         # Create empty depth map with GT resolution
-        pred_uncropped = torch.zeros(gt.shape, dtype=pred.dtype, device=pred.device)
+        pred_uncropped = torch.zeros(
+            gt.shape, dtype=pred.dtype, device=pred.device)
         # Uncrop top vertically and center horizontally
         if scale_fn == 'top-center':
-            top, left = gt.shape[2] - pred.shape[2], (gt.shape[3] - pred.shape[3]) // 2
-            pred_uncropped[:, :, top:(top + pred.shape[2]), left:(left + pred.shape[3])] = pred
+            top, left = gt.shape[2] - \
+                pred.shape[2], (gt.shape[3] - pred.shape[3]) // 2
+            pred_uncropped[:, :, top:(
+                top + pred.shape[2]), left:(left + pred.shape[3])] = pred
         else:
-            raise NotImplementedError('Depth scale function {} not implemented.'.format(scale_fn))
+            raise NotImplementedError(
+                'Depth scale function {} not implemented.'.format(scale_fn))
         # Return uncropped depth map
         return pred_uncropped

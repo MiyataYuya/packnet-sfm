@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "script/train.py",
+            "name": "train_1",
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/scripts/train.py",
@@ -17,6 +17,34 @@
             "env": {
                 "PYTHONPATH": "${workspaceFolder}"
             }
-        }
+        },
+        {
+            "name": "infer_1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/scripts/infer.py",
+            "console": "integratedTerminal",
+            // "args": "${command:pickArgs}"
+            "args": [
+                "--checkpoint",
+                "${workspaceFolder}/runs/train/default_config-train_PxCam-2024.03.26-09h30m39s/epoch=44_-loss=0.000.ckpt",
+                "--input",
+                "datasets/model_of_mouth/WIN_20240325_18_01_15_Pro.mp4/00000033.png",
+                "--output",
+                "runs/train/default_config-train_PxCam-2024.03.26-09h30m39s/output_00000033.png",
+                "--save",
+                "png"
+            ],
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}"
+            }
+        },
+        {
+            "name": "make point cloud",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/make_point_cloud.py",
+            "console": "integratedTerminal",
+        },
     ]
 }
