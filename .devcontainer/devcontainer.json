@@ -10,8 +10,13 @@
 	],
 	"mounts": [
 		{
-			"source": "/home/miyata/dataset",
+			"source": "W:\\dataset\\",
 			"target": "/workspaces/packnet-sfm/datasets",
+			"type": "bind"
+		},
+		{
+			"source": "W:\\output\\DentalDepthDetector",
+			"target": "/workspaces/packnet-sfm/output",
 			"type": "bind"
 		}
 	]
